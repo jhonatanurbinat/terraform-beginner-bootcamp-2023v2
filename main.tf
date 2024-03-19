@@ -1,9 +1,13 @@
 terraform {
   required_providers {
-    terratowns = {
-      source = "local.providers/local/terratowns"
-      version = "1.0.0"
-    }
+    //terratowns = {
+     // source = "local.providers/local/terratowns"
+      //version = "1.0.0"
+    //}
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "=3.0.0"
+    }    
   }
   #backend "remote" {
   #  hostname = "app.terraform.io"
@@ -14,55 +18,44 @@ terraform {
   #  }
   #}
   cloud {
-    organization = "ExamPro"
+    organization = "cloudjhonatandev18"
     workspaces {
-      name = "terra-house-1"
+      name = "environmentdev"
     }
   }
-
 }
 
-provider "terratowns" {
-  endpoint = var.terratowns_endpoint
-  user_uuid = var.teacherseat_user_uuid
-  token = var.terratowns_access_token
+resource "azurerm_resource_group" "example" {
+  name     = "example-resources"
+  location = "East US"
 }
 
-module "home_arcanum_hosting" {
-  source = "./modules/terrahome_aws"
-  user_uuid = var.teacherseat_user_uuid
-  public_path = var.arcanum.public_path
-  content_version = var.arcanum.content_version
+resource "azurerm_log_analytics_workspace" "example" {
+  name                = "acctest-01"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
 }
 
-resource "terratowns_home" "home" {
-  name = "How to play Arcanum in 2023!"
-  description = <<DESCRIPTION
-Arcanum is a game from 2001 that shipped with alot of bugs.
-Modders have removed all the originals making this game really fun
-to play (despite that old look graphics). This is my guide that will
-show you how to play arcanum without spoiling the plot.
-DESCRIPTION
-  domain_name = module.home_arcanum_hosting.domain_name
-  town = "missingo"
-  content_version = var.arcanum.content_version
+resource "azurerm_container_app_environment" "example" {
+  name                       = "Example-Environment"
+  location                   = azurerm_resource_group.example.location
+  resource_group_name        = azurerm_resource_group.example.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
 }
+resource "azurerm_container_app" "example" {
+  name                         = "example-app"
+  container_app_environment_id = azurerm_container_app_environment.example.id
+  resource_group_name          = azurerm_resource_group.example.name
+  revision_mode                = "Single"
 
-module "home_payday_hosting" {
-  source = "./modules/terrahome_aws"
-  user_uuid = var.teacherseat_user_uuid
-  public_path = var.payday.public_path
-  content_version = var.payday.content_version
-}
-
-resource "terratowns_home" "home_payday" {
-  name = "Making your Payday Bar"
-  description = <<DESCRIPTION
-Since I really like Payday candy bars but they cost so much to import
-into Canada, I decided I would see how I could my own Paydays bars,
-and if they are most cost effective.
-DESCRIPTION
-  domain_name = module.home_payday_hosting.domain_name
-  town = "missingo"
-  content_version = var.payday.content_version
+  template {
+    container {
+      name   = "examplecontainerapp"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      cpu    = 0.25
+      memory = "0.5Gi"
+    }
+  }
 }
