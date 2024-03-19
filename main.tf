@@ -5,9 +5,9 @@ terraform {
       //version = "1.0.0"
     //}
     azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=3.0.0"
-    }    
+      source = "hashicorp/azurerm"
+      version = "3.96.0"
+    }   
   }
   #backend "remote" {
   #  hostname = "app.terraform.io"
@@ -17,13 +17,27 @@ terraform {
   #    name = "terra-house-1"
   #  }
   #}
-  cloud {
-    organization = "cloudjhonatandev18"
-    workspaces {
-      name = "environmentdev"
-    }
+
+  backend  "azurerm"  {
   }
+
+  //cloud {
+  //  organization = "cloudjhonatandev18"
+  //  workspaces {
+  //    name = "environmentdev"
+  //  }
+  //}
 }
+
+//provider "azurerm" {
+//  skip_provider_registration = true # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
+//  features {}
+//}
+
+provider "azurerm" {
+   features {} 
+}
+
 
 resource "azurerm_resource_group" "example" {
   name     = "example-resources"
